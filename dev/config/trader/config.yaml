@@ -1,3 +1,17 @@
 app:
   name: "trader-bot"
-redis:
+
+okx:
+  url: "wss://wspap.okx.com:8443/ws/v5/business?brokerId=9999"
+  passphrase: "g2fqOvM2S19@"
+  apiKey: "f0c41831-cb26-4f7b-9e14-1b9d528455e6"
+  secretKey: "4F52664D64AB64AA3C0A41F3236A62A4"
+  origin: ""
+
+#Production
+#okx:
+#  url: ""
+#  passphrase: "c5W072GuV!FM"
+#  apiKey: "2a26e7ef-5a61-4cfb-ae5d-24bc15cee319"
+#  secretKey: "EDECB2F65CBFF163E40CE2AFE33B78FB"
+#  origin: ""

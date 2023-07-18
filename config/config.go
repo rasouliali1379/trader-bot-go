@@ -10,7 +10,6 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"go.uber.org/fx"
 )
 
 var (
@@ -28,6 +27,7 @@ type Config struct {
 	App   App   `yaml:"app" required:"true"`
 	Redis Redis `yaml:"redis" required:"true"`
 	Mysql Mysql `yaml:"database" required:"true"`
+	OKX   OKX   `yaml:"OKX"`
 }
 
 type App struct {
@@ -51,8 +51,16 @@ type Redis struct {
 	Timeout  time.Duration `yaml:"timeout"`
 }
 
+type OKX struct {
+	Url        string `yaml:"exchanges.okx.url"  required:"true"`
+	Origin     string `yaml:"exchanges.okx.origin"  required:"true"`
+	ApiKey     string `yaml:"exchanges.okx.apiKey"  required:"true"`
+	SecretKey  string `yaml:"exchanges.okx.secretKey"  required:"true"`
+	Passphrase string `yaml:"exchanges.okx.passphrase"  required:"true"`
+}
+
 func Validate(c any) error {
-	errmsg := ""
+	errMsg := ""
 	numFields := reflect.TypeOf(c).NumField()
 	for i := 0; i < numFields; i++ {
 		fieldType := reflect.TypeOf(c).Field(i)
@@ -64,27 +72,27 @@ func Validate(c any) error {
 		fieldVal := reflect.ValueOf(c).Field(i)
 		if fieldVal.Kind() == reflect.Struct {
 			if err := Validate(fieldVal.Interface()); err != nil {
-				errmsg += fmt.Sprintf("%s > [%v], ", fieldType.Name, err)
+				errMsg += fmt.Sprintf("%s > [%v], ", fieldType.Name, err)
 			}
 		} else {
 			if fieldVal.IsZero() {
-				errmsg += fmt.Sprintf("%s, ", fieldType.Name)
+				errMsg += fmt.Sprintf("%s, ", fieldType.Name)
 			}
 		}
 	}
-	if errmsg == "" {
+	if errMsg == "" {
 		return nil
 	}
-	return errors.New(errmsg)
+	return errors.New(errMsg)
 }
 
 func C() *Config {
 	return &confs
 }
 
-func Init(shutdowner fx.Shutdowner, configPath string) {
+func Init() {
 	viper.SetConfigName("config")
-	viper.AddConfigPath(configPath)
+	viper.AddConfigPath("../../dev/config/trader/")
 	viper.AddConfigPath(".")
 	viper.ReadInConfig()
 	loadConfigs()
@@ -97,7 +105,6 @@ func Init(shutdowner fx.Shutdowner, configPath string) {
 		}
 		viper.Set("fsnotify", time.Now())
 		log.Println("config file changed. restarting...")
-		shutdowner.Shutdown()
 	})
 	viper.WatchConfig()
 }
