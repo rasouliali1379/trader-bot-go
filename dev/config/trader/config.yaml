@@ -1,5 +1,6 @@
 app:
   name: "trader-bot"
+  environment: "dev"
 
 okx:
   url: "wss://wspap.okx.com:8443/ws/v5/business?brokerId=9999"
@@ -7,7 +8,6 @@ okx:
   apiKey: "f0c41831-cb26-4f7b-9e14-1b9d528455e6"
   secretKey: "4F52664D64AB64AA3C0A41F3236A62A4"
   origin: ""
-
 #Production
 #okx:
 #  url: ""
@@ -15,3 +15,26 @@ okx:
 #  apiKey: "2a26e7ef-5a61-4cfb-ae5d-24bc15cee319"
 #  secretKey: "EDECB2F65CBFF163E40CE2AFE33B78FB"
 #  origin: ""
+
+redis:
+  username: ""
+  password: ""
+  db: 0
+  host: "localhost:6379"
+  logger: ""
+
+mysql:
+  username: "admin"
+  password: "admin"
+  host: "localhost"
+  port: "5432"
+  schema: "trader-bot"
+
+jobDuration:
+  market: "5s"
+
+strategies:
+  - strategy: ema
+    markets:
+      - market: BTC-USD
+        exchange: okx

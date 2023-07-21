@@ -3,7 +3,9 @@ package config
 import (
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
 	"log"
+	"os"
 	"reflect"
 	"sync"
 	"time"
@@ -24,10 +26,12 @@ const (
 )
 
 type Config struct {
-	App   App   `yaml:"app" required:"true"`
-	Redis Redis `yaml:"redis" required:"true"`
-	Mysql Mysql `yaml:"database" required:"true"`
-	OKX   OKX   `yaml:"OKX"`
+	App         App         `yaml:"app" required:"true"`
+	Strategies  []Strategy  `yaml:"strategies" required:"true"`
+	Redis       Redis       `yaml:"redis" required:"true"`
+	Mysql       Mysql       `yaml:"database" required:"true"`
+	OKX         OKX         `yaml:"OKX"`
+	JobDuration JobDuration `yaml:"jobDuration" required:"true"`
 }
 
 type App struct {
@@ -52,11 +56,25 @@ type Redis struct {
 }
 
 type OKX struct {
-	Url        string `yaml:"exchanges.okx.url"  required:"true"`
-	Origin     string `yaml:"exchanges.okx.origin"  required:"true"`
-	ApiKey     string `yaml:"exchanges.okx.apiKey"  required:"true"`
-	SecretKey  string `yaml:"exchanges.okx.secretKey"  required:"true"`
-	Passphrase string `yaml:"exchanges.okx.passphrase"  required:"true"`
+	Url        string `yaml:"exchanges.okx.url" required:"true"`
+	Origin     string `yaml:"exchanges.okx.origin" required:"true"`
+	ApiKey     string `yaml:"exchanges.okx.apiKey" required:"true"`
+	SecretKey  string `yaml:"exchanges.okx.secretKey" required:"true"`
+	Passphrase string `yaml:"exchanges.okx.passphrase" required:"true"`
+}
+
+type JobDuration struct {
+	Market time.Duration `yaml:"market" required:"true"`
+}
+
+type Strategy struct {
+	Strategy string   `yaml:"strategy" required:"true"`
+	Markets  []Market `yaml:"market" required:"true"`
+}
+
+type Market struct {
+	Market   string `yaml:"market" required:"true"`
+	Exchange string `yaml:"exchange" required:"true"`
 }
 
 func Validate(c any) error {
@@ -91,8 +109,13 @@ func C() *Config {
 }
 
 func Init() {
+	dir, err := os.Getwd()
+	if err != nil {
+		zap.L().Fatal("error while getting path to app", zap.Error(err))
+	}
+
 	viper.SetConfigName("config")
-	viper.AddConfigPath("../../dev/config/trader/")
+	viper.AddConfigPath(dir + "/dev/config/trader/")
 	viper.AddConfigPath(".")
 	viper.ReadInConfig()
 	loadConfigs()

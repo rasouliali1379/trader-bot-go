@@ -17,8 +17,10 @@ type Params struct {
 	Exchange *exchange.Exchange
 }
 
-func New(params Params) port.Exchange {
-	return &Repository{exchange: params.Exchange}
+var _ port.ExchangeRepository = &Repository{}
+
+func New(params Params) Repository {
+	return Repository{exchange: params.Exchange}
 }
 
 func (r Repository) GetCandles(ctx context.Context, market *domain.Market) (any, error) {

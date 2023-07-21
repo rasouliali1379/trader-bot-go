@@ -5,7 +5,7 @@ import (
 	"hamgit.ir/novin-backend/trader-bot/internal/core/domain"
 )
 
-type Exchange interface {
+type ExchangeRepository interface {
 	GetCandles(ctx context.Context, market *domain.Market) (any, error)
 	GetMarketSummary(ctx context.Context, market *domain.Market) (any, error)
 	GetOrderBook(ctx context.Context, market *domain.Market) (any, error)
