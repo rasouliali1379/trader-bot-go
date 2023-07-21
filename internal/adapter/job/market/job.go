@@ -2,7 +2,7 @@ package market
 
 import (
 	"context"
-	"go.uber.org/fx"
+	"fmt"
 	"go.uber.org/zap"
 	"hamgit.ir/novin-backend/trader-bot/config"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/domain"
@@ -10,31 +10,42 @@ import (
 	"time"
 )
 
-type Job struct {
+type job struct {
+	marketService port.MarketService
+	exchangeRepo  port.ExchangeRepository
 }
 
-type Params struct {
-	fx.In
-	Exchange *port.ExchangeRepository
+func New(marketService port.MarketService, exchangeRepo port.ExchangeRepository) port.MarketJob {
+	return &job{marketService: marketService, exchangeRepo: exchangeRepo}
 }
 
-func New(params Params) port.MarketJob {
-	return &Job{}
-}
-
-func (j Job) Run(ctx context.Context, m *domain.Market) error {
+func (j job) Run(c context.Context, m *domain.Market) error {
 	zap.L().Info("Market job is running")
 
-	ticker := time.NewTicker(config.C().JobDuration.Market)
-	for ; true; <-ticker.C {
-		if err := j.process(ctx, m); err != nil {
-			zap.L().Error("error while running job", zap.Error(err))
-		}
+	if err := j.marketService.SubscribeToMarket(c, m); err != nil {
+		return err
 	}
+
+	go j.watch(c, m)
 
 	return nil
 }
 
-func (j Job) process(ctx context.Context, m *domain.Market) error {
-	return nil
+func (j job) watch(c context.Context, m *domain.Market) {
+	ticker := time.NewTicker(config.C().JobDuration.Market)
+
+	for ; true; <-ticker.C {
+
+		msg, err := j.exchangeRepo.Read(c)
+		if err != nil {
+			zap.L().Error(fmt.Sprintf("error while tracing %s-%s market", m.Give, m.Take), zap.Error(err))
+		}
+
+		switch msg.(type) {
+		case *domain.Price:
+			if err := j.marketService.TrackMarket(c, msg.(*domain.Price)); err != nil {
+				zap.L().Error("", zap.Error(err))
+			}
+		}
+	}
 }

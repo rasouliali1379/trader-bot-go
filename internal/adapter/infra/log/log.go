@@ -1,28 +1,15 @@
 package log
 
 import (
-	"context"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"hamgit.ir/novin-backend/trader-bot/config"
-	"log"
 	"os"
 )
 
-func Init(lc fx.Lifecycle) error {
+func Init() {
 	logger := configLogger()
 	zap.ReplaceGlobals(logger)
-
-	lc.Append(fx.Hook{
-		OnStop: func(c context.Context) error {
-			if err := zap.L().Sync(); err != nil {
-				log.Println("logger failed to sync:", err)
-			}
-			return nil
-		},
-	})
-	return nil
 }
 
 func configLogger() *zap.Logger {

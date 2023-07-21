@@ -36,5 +36,5 @@ jobDuration:
 strategies:
   - strategy: ema
     markets:
-      - market: BTC-USD
+      - market: BTC-USDT
         exchange: okx

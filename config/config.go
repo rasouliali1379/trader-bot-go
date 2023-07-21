@@ -32,6 +32,7 @@ type Config struct {
 	Mysql       Mysql       `yaml:"database" required:"true"`
 	OKX         OKX         `yaml:"OKX"`
 	JobDuration JobDuration `yaml:"jobDuration" required:"true"`
+	InfluxDB    InfluxDB    `yaml:"influxDB" required:"true"`
 }
 
 type App struct {
@@ -75,6 +76,11 @@ type Strategy struct {
 type Market struct {
 	Market   string `yaml:"market" required:"true"`
 	Exchange string `yaml:"exchange" required:"true"`
+}
+
+type InfluxDB struct {
+	Url   string `yaml:"url" required:"true"`
+	Token string `yaml:"token" required:"true"`
 }
 
 func Validate(c any) error {

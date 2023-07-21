@@ -2,52 +2,41 @@ package main
 
 import (
 	"context"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
+	"hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/influxdb"
+	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/influx"
+
 	"hamgit.ir/novin-backend/trader-bot/config"
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/exchange"
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/log"
-	"hamgit.ir/novin-backend/trader-bot/internal/adapter/job"
-	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository"
+	"hamgit.ir/novin-backend/trader-bot/internal/adapter/job/market"
+	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/exchanges/okx"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/domain"
-	"hamgit.ir/novin-backend/trader-bot/internal/core/port"
-	"hamgit.ir/novin-backend/trader-bot/internal/core/service"
+	"hamgit.ir/novin-backend/trader-bot/internal/core/service/markets"
 )
 
 func main() {
 
+	ctx := context.Background()
+
 	config.Init()
+	log.Init()
 
-	app := fx.New(
-		fx.Provide(exchange.Init),
+	ex := exchange.Init()
+	influxDB := influxdb.Init()
 
-		repository.Module,
-		service.Module,
-		job.Module,
+	influxRepo := influx.New(influxDB)
+	okxRepo := okx.New(ex.Conns[exchange.OKX])
 
-		fx.Invoke(log.Init),
-		fx.Invoke(runJobs),
-	)
+	okxMarketService := markets.NewOkxMarketService(okxRepo, influxRepo)
 
-	zap.L().Fatal("error while starting the app", zap.Error(app.Start(context.Background())))
-}
+	marketJob := market.New(okxMarketService, okxRepo)
 
-func runJobs(lc fx.Lifecycle, marketJob port.MarketJob) {
-	lc.Append(fx.Hook{
-		OnStart: func(c context.Context) error {
-
-			for _, s := range config.C().Strategies {
-				for _, _ = range s.Markets {
-					if err := marketJob.Run(c, &domain.Market{}); err != nil {
-						return err
-					}
-				}
+	for _, s := range config.C().Strategies {
+		for _, _ = range s.Markets {
+			if err := marketJob.Run(ctx, &domain.Market{Give: "BTC", Take: "USDT"}); err != nil {
+				zap.L().Fatal("error while running job", zap.Error(err))
 			}
-
-			return nil
-		},
-		OnStop: func(ctx context.Context) error {
-			return nil
-		},
-	})
+		}
+	}
 }
