@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"go.uber.org/zap"
-	"hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/influxdb"
-	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/influx"
+	influx "hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/influxdb"
+	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/influxdb"
 
 	"hamgit.ir/novin-backend/trader-bot/config"
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/exchange"
@@ -23,9 +23,9 @@ func main() {
 	log.Init()
 
 	ex := exchange.Init()
-	influxDB := influxdb.Init()
+	influxDB := influx.Init()
 
-	influxRepo := influx.New(influxDB)
+	influxRepo := influxdb.New(influxDB)
 	okxRepo := okx.New(ex.Conns[exchange.OKX])
 
 	okxMarketService := markets.NewOkxMarketService(okxRepo, influxRepo)

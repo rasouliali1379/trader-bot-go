@@ -43,7 +43,9 @@ func (j job) watch(c context.Context, m *domain.Market) {
 
 		switch msg.(type) {
 		case *domain.Price:
-			if err := j.marketService.TrackMarket(c, msg.(*domain.Price)); err != nil {
+			price := msg.(*domain.Price)
+			price.Market = m
+			if err := j.marketService.TrackMarket(c, price); err != nil {
 				zap.L().Error("", zap.Error(err))
 			}
 		}
