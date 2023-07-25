@@ -23,6 +23,12 @@ redis:
   host: "localhost:6379"
   logger: ""
 
+influxdb:
+  Url: "http://localhost:8086"
+  token: "admin123456"
+  org: "novin-arzesh"
+  bucket: "prices"
+
 mysql:
   username: "admin"
   password: "admin"

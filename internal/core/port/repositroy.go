@@ -12,5 +12,5 @@ type ExchangeRepository interface {
 }
 
 type InfluxRepository interface {
-	AddPoint(ctx context.Context, m domain.Price) error
+	AddPoint(ctx context.Context, m *domain.Price)
 }

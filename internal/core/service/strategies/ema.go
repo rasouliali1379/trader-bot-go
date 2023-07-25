@@ -1,19 +1,20 @@
 package strategies
 
 import (
-	"go.uber.org/fx"
-	"hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/exchange"
+	"context"
+	"go.uber.org/zap"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/port"
 )
 
-type EmaStrategy struct {
+type ema struct {
+	exchangeRepo port.ExchangeRepository
 }
 
-type Params struct {
-	fx.In
-	Exchange *exchange.Exchange
+func NewEmaStrategy(exchangeRepo port.ExchangeRepository) port.StrategyService {
+	return &ema{exchangeRepo: exchangeRepo}
 }
 
-func NewEmaStrategy(params Params) port.StrategyService {
-	return &EmaStrategy{}
+func (e ema) Execute(_ context.Context) error {
+	zap.L().Info("executing ema strategy")
+	return nil
 }

@@ -3,30 +3,30 @@ package influxdb
 import (
 	"context"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	influxapi "github.com/influxdata/influxdb-client-go/v2/api"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/domain"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/port"
 )
 
 type repository struct {
-	db influxdb2.Client
+	api influxapi.WriteAPI
 }
 
-func New(db influxdb2.Client) port.InfluxRepository {
-	return &repository{db: db}
+func New(api influxapi.WriteAPI) port.InfluxRepository {
+	return &repository{api: api}
 }
 
-func (r repository) AddPoint(ctx context.Context, m domain.Price) error {
-	writeAPI := r.db.WriteAPI(org, bucket)
+func (r *repository) AddPoint(_ context.Context, m *domain.Price) {
 	for i := range m.List {
-		p := influxdb2.NewPointWithMeasurement("price").
-			AddTag("unit", m.Market.Take).
+		measure := m.Market.Give + m.Market.Take
+		p := influxdb2.NewPointWithMeasurement(m.Market.Exchange).
+			AddTag("market", measure).
 			AddField("open", m.List[i].Open).
 			AddField("close", m.List[i].Close).
 			AddField("high", m.List[i].High).
 			AddField("low", m.List[i].Low).
 			SetTime(m.List[i].Time)
-		writeAPI.WritePoint(p)
+		r.api.WritePoint(p)
 	}
-
-	return nil
+	r.api.Flush()
 }

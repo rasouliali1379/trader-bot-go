@@ -1,6 +1,7 @@
 package domain
 
 type Market struct {
-	Give string
-	Take string
+	Give     string
+	Take     string
+	Exchange string
 }

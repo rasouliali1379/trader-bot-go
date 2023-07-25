@@ -4,15 +4,18 @@ import (
 	"context"
 	"errors"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
+	influxapi "github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/influxdata/influxdb-client-go/v2/domain"
 	"hamgit.ir/novin-backend/trader-bot/config"
 )
 
-func Init() influxdb2.Client {
-	return influxdb2.NewClientWithOptions(
+func Init() influxapi.WriteAPI {
+	client := influxdb2.NewClientWithOptions(
 		config.C().InfluxDB.Url,
 		config.C().InfluxDB.Token,
 		influxdb2.DefaultOptions().SetBatchSize(20))
+
+	return client.WriteAPI(config.C().InfluxDB.Org, config.C().InfluxDB.Bucket)
 }
 
 func HealthCheck(client influxdb2.Client) error {

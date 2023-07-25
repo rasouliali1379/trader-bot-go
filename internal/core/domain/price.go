@@ -30,6 +30,28 @@ func (p Price) FromIndexTickersDto(prices []dto.IndexTickers) *Price {
 	return &Price{List: priceList}
 }
 
+func (p Price) FromIndexCandlesDto(prices [][]string) *Price {
+	priceList := make([]PriceItem, len(prices))
+
+	for i := range prices {
+		ts, _ := strconv.ParseInt(prices[i][0], 10, 64)
+		open, _ := strconv.ParseFloat(prices[i][1], 10)
+		high, _ := strconv.ParseFloat(prices[i][2], 10)
+		low, _ := strconv.ParseFloat(prices[i][3], 10)
+		cls, _ := strconv.ParseFloat(prices[i][4], 10)
+
+		priceList[i] = PriceItem{
+			Open:  open,
+			Close: cls,
+			High:  high,
+			Low:   low,
+			Time:  time.Unix(ts/1000, 0),
+		}
+	}
+
+	return &Price{List: priceList}
+}
+
 func (i PriceItem) FromIndexTickersDto(price dto.IndexTickers) PriceItem {
 
 	ts, _ := strconv.ParseInt(price.Ts, 10, 64)
@@ -38,7 +60,7 @@ func (i PriceItem) FromIndexTickersDto(price dto.IndexTickers) PriceItem {
 	low, _ := strconv.ParseFloat(price.Low24H, 10)
 
 	return PriceItem{
-		Time: time.Unix(0, ts),
+		Time: time.Unix(ts/1000, 0),
 		Open: open,
 		High: high,
 		Low:  low,

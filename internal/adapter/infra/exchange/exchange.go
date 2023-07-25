@@ -1,8 +1,8 @@
 package exchange
 
 import (
+	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
-	"golang.org/x/net/websocket"
 	"hamgit.ir/novin-backend/trader-bot/config"
 )
 
@@ -24,9 +24,9 @@ func Init() *Exchange {
 }
 
 func newClient(url string) *websocket.Conn {
-	dial, err := websocket.Dial(url, "", "http://localhost/")
+	c, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		zap.L().Fatal("error while creating exchange client", zap.Error(err))
 	}
-	return dial
+	return c
 }

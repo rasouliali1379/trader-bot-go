@@ -26,7 +26,8 @@ const (
 )
 
 type Config struct {
-	App         App         `yaml:"app" required:"true"`
+	App App `yaml:"app" required:"true"`
+	//Http        Http        `yaml:"http" require`
 	Strategies  []Strategy  `yaml:"strategies" required:"true"`
 	Redis       Redis       `yaml:"redis" required:"true"`
 	Mysql       Mysql       `yaml:"database" required:"true"`
@@ -79,8 +80,10 @@ type Market struct {
 }
 
 type InfluxDB struct {
-	Url   string `yaml:"url" required:"true"`
-	Token string `yaml:"token" required:"true"`
+	Url    string `yaml:"url" required:"true"`
+	Token  string `yaml:"token" required:"true"`
+	Org    string `yaml:"org" required:"true"`
+	Bucket string `yaml:"bucket" required:"true"`
 }
 
 func Validate(c any) error {
