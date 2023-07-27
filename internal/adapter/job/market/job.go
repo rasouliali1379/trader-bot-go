@@ -49,7 +49,7 @@ func (j *job) watch(c context.Context, m *domain.Market) {
 		switch msg.(type) {
 		case *domain.Price:
 			price := msg.(*domain.Price)
-			price.Market = m
+			price.Exchange.Market = m
 			j.marketService.TrackMarket(c, price)
 		}
 	}

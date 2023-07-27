@@ -9,13 +9,13 @@ import (
 	"hamgit.ir/novin-backend/trader-bot/config"
 )
 
-func Init() influxapi.WriteAPI {
+func Init() (influxapi.WriteAPI, influxapi.QueryAPI) {
 	client := influxdb2.NewClientWithOptions(
 		config.C().InfluxDB.Url,
 		config.C().InfluxDB.Token,
 		influxdb2.DefaultOptions().SetBatchSize(20))
 
-	return client.WriteAPI(config.C().InfluxDB.Org, config.C().InfluxDB.Bucket)
+	return client.WriteAPI(config.C().InfluxDB.Org, config.C().InfluxDB.Bucket), client.QueryAPI(config.C().InfluxDB.Org)
 }
 
 func HealthCheck(client influxdb2.Client) error {

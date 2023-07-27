@@ -10,11 +10,12 @@ import (
 )
 
 type repository struct {
+	exchange       *domain.Exchange
 	exchangeClient *websocket.Conn
 }
 
-func New(exchangeClient *websocket.Conn) port.ExchangeRepository {
-	return &repository{exchangeClient: exchangeClient}
+func New(exchange *domain.Exchange, exchangeClient *websocket.Conn) port.ExchangeRepository {
+	return &repository{exchange: exchange, exchangeClient: exchangeClient}
 }
 
 func (r *repository) Subscribe(c context.Context, channel string, instrumentID string) error {

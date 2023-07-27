@@ -6,5 +6,5 @@ import (
 )
 
 type MarketJob interface {
-	Run(c context.Context, lm *domain.Market) error
+	Run(c context.Context, m *domain.Market) error
 }

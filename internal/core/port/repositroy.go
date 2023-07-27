@@ -3,6 +3,7 @@ package port
 import (
 	"context"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/domain"
+	"time"
 )
 
 type ExchangeRepository interface {
@@ -12,5 +13,6 @@ type ExchangeRepository interface {
 }
 
 type InfluxRepository interface {
-	AddPoint(ctx context.Context, m *domain.Price)
+	AddPoint(ctx context.Context, m *domain.Market)
+	GetPoints(ctx context.Context, m *domain.Market, period time.Duration) (*domain.Market, error)
 }

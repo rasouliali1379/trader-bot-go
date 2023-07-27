@@ -7,8 +7,8 @@ import (
 )
 
 type Price struct {
-	Market *Market
-	List   []PriceItem
+	Exchange *Exchange
+	List     []PriceItem
 }
 
 type PriceItem struct {

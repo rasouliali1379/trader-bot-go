@@ -25,6 +25,10 @@ const (
 	EnvTest       = "test"
 )
 
+const (
+	StrategyEma = "ema"
+)
+
 type Config struct {
 	App App `yaml:"app" required:"true"`
 	//Http        Http        `yaml:"http" require`

@@ -25,12 +25,17 @@ func main() {
 	log.Init()
 
 	ex := exchange.Init()
-	influxApi := influx.Init()
+	influxWrite, influxRead := influx.Init()
 
-	influxRepo := influxdb.New(influxApi)
-	okxRepo := okx.New(ex.Conns[exchange.OKX])
+	testMarket := &domain.Market{
+		Give:     "BTC",
+		Take:     "USDT",
+		Exchange: &domain.Exchange{Name: "okx"},
+	}
 
-	emaStrategy := strategies.NewEmaStrategy(okxRepo)
+	influxRepo := influxdb.New(influxWrite, influxRead)
+	okxRepo := okx.New(testMarket.Exchange, ex.Conns[exchange.OKX])
+	emaStrategy := strategies.NewEmaStrategy(testMarket, okxRepo, influxRepo)
 
 	var okxMarketObservers domain.Observer
 	okxMarketObservers.Register(emaStrategy.Execute)
@@ -39,19 +44,9 @@ func main() {
 
 	marketJob := market.New(okxMarketService, okxRepo)
 
-	for _, s := range config.C().Strategies {
-		for _, _ = range s.Markets {
-			if err := marketJob.Run(ctx, &domain.Market{Exchange: "okx", Give: "BTC", Take: "USDT"}); err != nil {
-				zap.L().Fatal("error while running job", zap.Error(err))
-			}
-		}
+	if err := marketJob.Run(ctx, testMarket); err != nil {
+		zap.L().Fatal("error while running job", zap.Error(err))
 	}
 
 	runtime.Goexit()
-	//http.HandleFunc("/health",
-	//	func(writer http.ResponseWriter, request *http.Request) {
-	//		_, _ = io.WriteString(writer, "nebula is up")
-	//	})
-	//
-	//zap.L().Fatal("", zap.Error(http.ListenAndServe(":"+config.C().Server.Port, nil)))
 }
