@@ -29,7 +29,7 @@ func (o okxMarketService) SubscribeToMarket(c context.Context, m *domain.Market)
 	return o.okxRepo.Subscribe(c, "index-candle1m", fmt.Sprintf("%s-%s", m.Give, m.Take))
 }
 
-func (o okxMarketService) TrackMarket(c context.Context, m *domain.Price) {
-	o.influxRepo.AddPoint(c, m)
+func (o okxMarketService) TrackMarket(c context.Context, m *domain.Market) {
+	o.influxRepo.AddPrice(c, m)
 	o.observers.NotifyAll(c)
 }

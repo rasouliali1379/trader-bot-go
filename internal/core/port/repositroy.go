@@ -13,6 +13,6 @@ type ExchangeRepository interface {
 }
 
 type InfluxRepository interface {
-	AddPoint(ctx context.Context, m *domain.Market)
-	GetPoints(ctx context.Context, m *domain.Market, period time.Duration) (*domain.Market, error)
+	AddPrice(ctx context.Context, m *domain.Market)
+	GetPrices(ctx context.Context, m *domain.Market, period time.Duration) (*domain.Market, error)
 }

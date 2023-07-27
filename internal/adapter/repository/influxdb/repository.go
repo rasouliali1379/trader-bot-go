@@ -21,7 +21,7 @@ func New(write influxapi.WriteAPI, read influxapi.QueryAPI) port.InfluxRepositor
 	return &repository{write: write, read: read}
 }
 
-func (r *repository) AddPoint(_ context.Context, m *domain.Market) {
+func (r *repository) AddPrice(_ context.Context, m *domain.Market) {
 	for i := range m.Price.List {
 		measure := m.Give + m.Take
 		p := influxdb2.NewPointWithMeasurement(m.Exchange.Name).
@@ -36,7 +36,7 @@ func (r *repository) AddPoint(_ context.Context, m *domain.Market) {
 	r.write.Flush()
 }
 
-func (r *repository) GetPoints(_ context.Context, m *domain.Market, period time.Duration) (*domain.Market, error) {
+func (r *repository) GetPrices(_ context.Context, m *domain.Market, period time.Duration) (*domain.Market, error) {
 
 	query := createOHLCFluxQuery(config.C().InfluxDB.Bucket, m, period)
 	result, err := r.read.QueryRaw(context.Background(), query, influxdb2.DefaultDialect())

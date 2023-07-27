@@ -1,4 +1,4 @@
-### Initialization
+### Initialization Flow
 #### 1- Reading config file:
 `confgi.yaml` should include infrastructure, exchanges and strategies configurations.
 #### 2- Creating domain models:
@@ -17,4 +17,10 @@ Other dependencies including InfluxDB, Mysql and redis must be initialized.
 In this step create separate instance for each exchange. Exchanges have to implement `ExchangeRepository` interface.
 Other repositories such as `influxRepository`, `cacheRepository` and `mysqlRepository` must be initialized.
 #### 5- Initialize strategies and register observers
-
+Strategies are located in `/internal/core/service/strategies`. Strategies must implement `StrategyService` interface.
+`Execute` method from `StrategyService` interface must be registered as observer. 
+#### 6- Initialize services:
+Observers will be injected to services while initialization.
+#### 7- Initialize jobs and run them
+At last jobs will be initialized and start running. Each job will creat a goroutine and starts to track the targeted market.
+It will inform the observers of any change in market, so they could execute their strategies.

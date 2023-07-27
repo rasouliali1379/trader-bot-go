@@ -11,5 +11,5 @@ type StrategyService interface {
 
 type MarketService interface {
 	SubscribeToMarket(c context.Context, m *domain.Market) error
-	TrackMarket(c context.Context, m *domain.Price)
+	TrackMarket(c context.Context, m *domain.Market)
 }

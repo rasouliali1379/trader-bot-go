@@ -26,7 +26,7 @@ func (e ema) Execute(c context.Context) error {
 	zap.L().Info("Executing EMA strategy")
 	defer zap.L().Info("EMA strategy executed successfully")
 
-	if _, err := e.influxRepo.GetPoints(c, e.market, time.Minute*15); err != nil {
+	if _, err := e.influxRepo.GetPrices(c, e.market, time.Minute*15); err != nil {
 		return err
 	}
 
