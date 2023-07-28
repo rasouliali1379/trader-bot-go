@@ -18,14 +18,12 @@ import (
 )
 
 func main() {
-
-	ctx := context.Background()
-
+	//infra
 	config.Init()
 	log.Init()
 
-	ex := exchange.Init()
 	influxWrite, influxRead := influx.Init()
+	connectionManager := exchange.Init()
 
 	testMarket := &domain.Market{
 		Give:     "BTC",
@@ -33,18 +31,20 @@ func main() {
 		Exchange: &domain.Exchange{Name: "okx"},
 	}
 
+	//Repo
 	influxRepo := influxdb.New(influxWrite, influxRead)
-	okxRepo := okx.New(testMarket.Exchange, ex.Conns[exchange.OKX])
-	emaStrategy := strategies.NewEmaStrategy(testMarket, okxRepo, influxRepo)
+	okxRepo := okx.New(testMarket.Exchange, connectionManager)
 
+	//service
+	emaStrategy := strategies.NewEmaStrategy(testMarket, okxRepo, influxRepo)
 	var okxMarketObservers domain.Observer
 	okxMarketObservers.Register(emaStrategy.Execute)
-
 	okxMarketService := markets.NewOkxMarketService(okxRepo, influxRepo, okxMarketObservers)
 
+	//jobs
 	marketJob := market.New(okxMarketService, okxRepo)
 
-	if err := marketJob.Run(ctx, testMarket); err != nil {
+	if err := marketJob.Run(context.Background(), testMarket); err != nil {
 		zap.L().Fatal("error while running job", zap.Error(err))
 	}
 

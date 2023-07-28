@@ -3,19 +3,19 @@ package okx
 import (
 	"context"
 	"encoding/json"
-	"github.com/gorilla/websocket"
+	"hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/exchange"
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/exchanges/okx/dto"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/domain"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/port"
 )
 
 type repository struct {
-	exchange       *domain.Exchange
-	exchangeClient *websocket.Conn
+	exchange *domain.Exchange
+	conn     *exchange.ConnectionManager
 }
 
-func New(exchange *domain.Exchange, exchangeClient *websocket.Conn) port.ExchangeRepository {
-	return &repository{exchange: exchange, exchangeClient: exchangeClient}
+func New(exchange *domain.Exchange, conn *exchange.ConnectionManager) port.ExchangeRepository {
+	return &repository{exchange: exchange, conn: conn}
 }
 
 func (r *repository) Subscribe(c context.Context, channel string, instrumentID string) error {
@@ -24,7 +24,7 @@ func (r *repository) Subscribe(c context.Context, channel string, instrumentID s
 		return err
 	}
 
-	if err = r.exchangeClient.WriteMessage(websocket.TextMessage, request); err != nil {
+	if err = r.conn.OKX().Write(request); err != nil {
 		return err
 	}
 
@@ -37,15 +37,15 @@ func (r *repository) Unsubscribe(c context.Context, channel string, instrumentID
 		return err
 	}
 
-	if err = r.exchangeClient.WriteMessage(websocket.BinaryMessage, request); err != nil {
+	if err = r.conn.OKX().Write(request); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r *repository) Read(c context.Context) (any, error) {
-	_, msg, err := r.exchangeClient.ReadMessage()
+func (r *repository) Read(_ context.Context) (any, error) {
+	msg, err := r.conn.OKX().Read()
 	if err != nil {
 		return nil, err
 	}
