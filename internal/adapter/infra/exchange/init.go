@@ -18,7 +18,7 @@ type ConnectionManager struct {
 func Init() *ConnectionManager {
 	conns := make(map[int]WebSocketWrapper)
 
-	conns[OKX] = newWebSocketWrapper(config.C().OKX.Url)
+	conns[OKX] = newWebSocketWrapper(config.C().OKX.WebSocketUrl)
 
 	return &ConnectionManager{
 		w: conns,

@@ -7,7 +7,7 @@ import (
 )
 
 type HttpWrapper interface {
-	Get(c context.Context, url string) ([]byte, error)
+	Get(c context.Context, url string, headers *http.Header) ([]byte, error)
 	Post(c context.Context, url string, body io.Reader) ([]byte, error)
 }
 
@@ -19,10 +19,14 @@ func newHttpWrapper() HttpWrapper {
 	return &httpWrapper{client: &http.Client{}}
 }
 
-func (h *httpWrapper) Get(c context.Context, url string) ([]byte, error) {
+func (h *httpWrapper) Get(c context.Context, url string, headers *http.Header) ([]byte, error) {
 	req, err := http.NewRequestWithContext(c, "GET", url, nil)
 	if err != nil {
 		return nil, err
+	}
+
+	if headers != nil {
+		req.Header = *headers
 	}
 
 	res, err := h.client.Do(req)

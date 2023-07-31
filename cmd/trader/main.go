@@ -19,7 +19,7 @@ import (
 
 func main() {
 	//infra
-	config.Init()
+	config.Init("/dev/config/trader/")
 	log.Init()
 
 	influxWrite, influxRead := influx.Init()

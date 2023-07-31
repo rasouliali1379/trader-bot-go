@@ -22,15 +22,15 @@ func New(write influxapi.WriteAPI, read influxapi.QueryAPI) port.InfluxRepositor
 }
 
 func (r *repository) AddPrice(_ context.Context, m *domain.Market) {
-	for i := range m.Price.List {
+	for i := range m.Price.Candles {
 		measure := m.Give + m.Take
 		p := influxdb2.NewPointWithMeasurement(m.Exchange.Name).
 			AddTag("market", measure).
-			AddField("open", m.Price.List[i].Open).
-			AddField("close", m.Price.List[i].Close).
-			AddField("high", m.Price.List[i].High).
-			AddField("low", m.Price.List[i].Low).
-			SetTime(m.Price.List[i].Time)
+			AddField("open", m.Price.Candles[i].Open).
+			AddField("close", m.Price.Candles[i].Close).
+			AddField("high", m.Price.Candles[i].High).
+			AddField("low", m.Price.Candles[i].Low).
+			SetTime(m.Price.Candles[i].Time)
 		r.write.WritePoint(p)
 	}
 	r.write.Flush()

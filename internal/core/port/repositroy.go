@@ -7,6 +7,7 @@ import (
 )
 
 type ExchangeRepository interface {
+	GetBalance(c context.Context) error
 	Subscribe(c context.Context, channel string, instrumentID string) error
 	Unsubscribe(c context.Context, channel string, instrumentID string) error
 	Read(c context.Context) (any, error)

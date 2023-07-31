@@ -2,19 +2,21 @@ app:
   name: "trader-bot"
   environment: "dev"
 
-okx:
-  url: "wss://wspap.okx.com:8443/ws/v5/business?brokerId=9999"
-  passphrase: "g2fqOvM2S19@"
-  apiKey: "f0c41831-cb26-4f7b-9e14-1b9d528455e6"
-  secretKey: "4F52664D64AB64AA3C0A41F3236A62A4"
-  origin: ""
-#Production
 #okx:
-#  url: ""
-#  passphrase: "c5W072GuV!FM"
-#  apiKey: "2a26e7ef-5a61-4cfb-ae5d-24bc15cee319"
-#  secretKey: "EDECB2F65CBFF163E40CE2AFE33B78FB"
+#  webSocketUrl: "wss://wspap.okx.com:8443/ws/v5/business?brokerId=9999"
+#  httpUrl: "https://www.okx.com"
+#  passphrase: "g2fqOvM2S19@"
+#  apiKey: "f0c41831-cb26-4f7b-9e14-1b9d528455e6"
+#  secretKey: "4F52664D64AB64AA3C0A41F3236A62A4"
 #  origin: ""
+#Production
+okx:
+  webSocketUrl: "wss://ws.okx.com:8443/ws/v5/business"
+  httpUrl: "https://www.okx.com"
+  passphrase: "c5W072GuV!FM"
+  apiKey: "f6b45847-6d8e-4d7b-9f75-b530c281990a"
+  secretKey: "2D4C88888D91F55F163290EDD5C52FE3"
+  origin: ""
 
 redis:
   username: ""

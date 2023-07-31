@@ -3,10 +3,18 @@ package okx
 import (
 	"context"
 	"encoding/json"
+	jsoniter "github.com/json-iterator/go"
+	"hamgit.ir/novin-backend/trader-bot/config"
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/exchange"
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/exchanges/okx/dto"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/domain"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/port"
+	"log"
+	"net/url"
+)
+
+const (
+	balancePath = "/api/v5/account/balance"
 )
 
 type repository struct {
@@ -16,6 +24,29 @@ type repository struct {
 
 func New(exchange *domain.Exchange, conn *exchange.ConnectionManager) port.ExchangeRepository {
 	return &repository{exchange: exchange, conn: conn}
+}
+
+func (r *repository) GetBalance(c context.Context) error {
+
+	path, err := url.JoinPath(config.C().OKX.HttpUrl, balancePath)
+	if err != nil {
+		return err
+	}
+
+	headers := createOKXAuthHeader(
+		"GET", balancePath, config.C().OKX.ApiKey, config.C().OKX.SecretKey, config.C().OKX.Passphrase)
+
+	res, err := r.conn.Http().Get(c, path, headers)
+	if err != nil {
+		return err
+	}
+
+	var balance dto.Balance
+	if err = jsoniter.Unmarshal(res, &balance); err != nil {
+		return err
+	}
+	log.Println(balance)
+	return nil
 }
 
 func (r *repository) Subscribe(c context.Context, channel string, instrumentID string) error {

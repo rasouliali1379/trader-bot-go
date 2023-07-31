@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	"log"
+	"net/url"
 	"os"
 	"reflect"
 	"sync"
@@ -62,11 +63,12 @@ type Redis struct {
 }
 
 type OKX struct {
-	Url        string `yaml:"exchanges.okx.url" required:"true"`
-	Origin     string `yaml:"exchanges.okx.origin" required:"true"`
-	ApiKey     string `yaml:"exchanges.okx.apiKey" required:"true"`
-	SecretKey  string `yaml:"exchanges.okx.secretKey" required:"true"`
-	Passphrase string `yaml:"exchanges.okx.passphrase" required:"true"`
+	WebSocketUrl string `yaml:"exchanges.okx.webSocketUrl" required:"true"`
+	HttpUrl      string `yaml:"exchanges.okx.httpUrl" required:"true"`
+	Origin       string `yaml:"exchanges.okx.origin" required:"true"`
+	ApiKey       string `yaml:"exchanges.okx.apiKey" required:"true"`
+	SecretKey    string `yaml:"exchanges.okx.secretKey" required:"true"`
+	Passphrase   string `yaml:"exchanges.okx.passphrase" required:"true"`
 }
 
 type JobDuration struct {
@@ -121,14 +123,20 @@ func C() *Config {
 	return &confs
 }
 
-func Init() {
+func Init(path string) {
 	dir, err := os.Getwd()
 	if err != nil {
 		zap.L().Fatal("error while getting path to app", zap.Error(err))
 	}
 
 	viper.SetConfigName("config")
-	viper.AddConfigPath(dir + "/dev/config/trader/")
+
+	configPath, err := url.JoinPath(dir, path)
+	if err != nil {
+		panic(err)
+	}
+
+	viper.AddConfigPath(configPath)
 	viper.AddConfigPath(".")
 	viper.ReadInConfig()
 	loadConfigs()
