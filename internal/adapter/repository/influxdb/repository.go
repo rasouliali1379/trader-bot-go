@@ -2,13 +2,11 @@ package influxdb
 
 import (
 	"context"
-	"fmt"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	influxapi "github.com/influxdata/influxdb-client-go/v2/api"
 	"hamgit.ir/novin-backend/trader-bot/config"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/domain"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/port"
-	"log"
 	"time"
 )
 
@@ -36,30 +34,12 @@ func (r *repository) AddPrice(_ context.Context, m *domain.Market) {
 	r.write.Flush()
 }
 
-func (r *repository) GetPrices(_ context.Context, m *domain.Market, period time.Duration) (*domain.Market, error) {
-
+func (r *repository) GetPrices(c context.Context, m *domain.Market, period time.Duration) (*domain.Market, error) {
 	query := createOHLCFluxQuery(config.C().InfluxDB.Bucket, m, period)
-	result, err := r.read.QueryRaw(context.Background(), query, influxdb2.DefaultDialect())
+	result, err := r.read.QueryRaw(c, query, influxdb2.DefaultDialect())
 	if err != nil {
 		return nil, err
 	}
 
-	log.Println(result)
-
-	return nil, nil
-}
-
-func createOHLCFluxQuery(bucket string, m *domain.Market, duration time.Duration) string {
-	return fmt.Sprintf(`from(bucket: "%s")
-  |> range(start: -%s)
-  |> filter(fn: (r) => r["_measurement"] == "%s")
-  |> filter(fn: (r) => r["_field"] == "close" or r["_field"] == "high" or r["_field"] == "low" or r["_field"] == "open")
-  |> filter(fn: (r) => r["market"] == "%s-%s")
-  |> yield(name: "mean")`,
-		bucket,
-		duration.String(),
-		m.Exchange.Name,
-		m.Give,
-		m.Take,
-	)
+	return m.ParseFromInfluxDto(result), nil
 }

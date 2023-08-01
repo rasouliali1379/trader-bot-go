@@ -5,6 +5,7 @@ import (
 	"go.uber.org/zap"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/domain"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/port"
+	"log"
 	"time"
 )
 
@@ -26,9 +27,12 @@ func (e ema) Execute(c context.Context) error {
 	zap.L().Info("Executing EMA strategy")
 	defer zap.L().Info("EMA strategy executed successfully")
 
-	if _, err := e.influxRepo.GetPrices(c, e.market, time.Minute*15); err != nil {
+	candles, err := e.influxRepo.GetPrices(c, e.market, time.Minute*15)
+	if err != nil {
 		return err
 	}
+
+	log.Println(candles.Price.Candles)
 
 	return nil
 }
