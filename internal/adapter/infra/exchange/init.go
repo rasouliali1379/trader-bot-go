@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	Binance = iota
-	OKX
+	OKX = iota
+	Binance
+	Kucoin
 )
 
 type ConnectionManager struct {
@@ -36,6 +37,10 @@ func (c *ConnectionManager) OKX() WebSocketWrapper {
 
 func (c *ConnectionManager) Binance() WebSocketWrapper {
 	return c.getConnection(Binance)
+}
+
+func (c *ConnectionManager) Kucoin() WebSocketWrapper {
+	return c.getConnection(Kucoin)
 }
 
 func (c *ConnectionManager) getConnection(conn int) WebSocketWrapper {

@@ -19,11 +19,13 @@ var (
 type WebSocketWrapper interface {
 	Read() ([]byte, error)
 	Write(msg []byte) error
+	IsConnected() bool
 }
 
 type webSocketWrapper struct {
-	m    sync.Mutex
-	conn *websocket.Conn
+	m           sync.Mutex
+	conn        *websocket.Conn
+	isConnected bool
 }
 
 func newWebSocketWrapper(url string) WebSocketWrapper {
@@ -46,6 +48,10 @@ func (w *webSocketWrapper) Write(msg []byte) error {
 	w.m.Lock()
 	defer w.m.Unlock()
 	return w.conn.WriteMessage(websocket.TextMessage, msg)
+}
+
+func (w *webSocketWrapper) IsConnected() bool {
+	return w.isConnected
 }
 
 func newConnection(url string) *websocket.Conn {

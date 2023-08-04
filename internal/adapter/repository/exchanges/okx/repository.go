@@ -107,3 +107,10 @@ func (r *repository) Read(_ context.Context) (any, error) {
 
 	return nil, domain.ErrUnknownType
 }
+
+func (r *repository) HasMarket(c context.Context, name string) error {
+	get, err := r.conn.Http().Get(c, "", nil)
+	if err != nil {
+		return err
+	}
+}
