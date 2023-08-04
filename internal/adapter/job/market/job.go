@@ -6,7 +6,6 @@ import (
 	"go.uber.org/zap"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/domain"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/port"
-	"log"
 )
 
 type job struct {
@@ -43,8 +42,6 @@ func (j *job) watch(c context.Context, m *domain.Market) {
 			zap.L().Error(fmt.Sprintf("error while tracing %s-%s market", m.Give, m.Take), zap.Error(err))
 			continue
 		}
-
-		log.Println(msg)
 
 		switch msg.(type) {
 		case *domain.Price:

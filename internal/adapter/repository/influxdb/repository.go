@@ -41,5 +41,6 @@ func (r *repository) GetPrices(c context.Context, m *domain.Market, period time.
 		return nil, err
 	}
 
-	return m.ParseFromInfluxDto(result), nil
+	m.Price.ParseFromInfluxDto(result)
+	return m, nil
 }
