@@ -6,6 +6,7 @@ import (
 	influx "hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/influxdb"
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/exchanges/okx"
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/influxdb"
+	"hamgit.ir/novin-backend/trader-bot/internal/core/port"
 	markets_srv "hamgit.ir/novin-backend/trader-bot/internal/core/service/markets"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/service/strategies"
 
@@ -27,52 +28,45 @@ func main() {
 	influxWrite, influxRead := influx.Init()
 	connectionManager := exchange.Init()
 
-	markets := make(map[string]domain.Market)
+	//Repo
+	influxRepo := influxdb.New(influxWrite, influxRead)
+	okxRepo := okx.New(connectionManager)
+
+	markets := make(map[string]port.MarketJob)
 	for _, s := range config.C().Strategies {
 		for _, m := range s.Markets {
 			switch m.Exchange {
 			case domain.OKX:
-				if _, ok := markets[m.Market]; !ok {
-					if connectionManager.Binance().IsConnected() {
-						givetake := strings.Split(m.Market, "-")
-						if len(givetake) == 2 {
-							markets[m.Market] = domain.Market{
-								Give: givetake[0], Take: givetake[1],
-								Exchange: &domain.Exchange{Name: domain.OKX}}
-						}
+				if value, ok := markets[m.Market]; !ok {
+					givetake := strings.Split(m.Market, "-")
+					if len(givetake) == 2 {
+						value = &domain.Market{
+							Give: givetake[0], Take: givetake[1],
+							Exchange: &domain.Exchange{Name: domain.OKX}}
 					}
+
+					if value == nil {
+						markets[m.Market] = nil
+						continue
+					}
+
+					if err := okxRepo.HasMarket(context.Background(), value); err != nil {
+						markets[m.Market] = nil
+						continue
+					}
+
+					markets[m.Market] = value
 				}
+
 			case domain.Binance:
-				if _, ok := markets[m.Market]; !ok {
-					if connectionManager.Binance().IsConnected() {
-						givetake := strings.Split(m.Market, "-")
-						if len(givetake) == 2 {
-							markets[m.Market] = domain.Market{
-								Give: givetake[0], Take: givetake[1],
-								Exchange: &domain.Exchange{Name: domain.Binance}}
-						}
-					}
-				}
+				//Same as OKX
 			case domain.Kucoin:
-				if _, ok := markets[m.Market]; !ok {
-					if connectionManager.Binance().IsConnected() {
-						givetake := strings.Split(m.Market, "-")
-						if len(givetake) == 2 {
-							markets[m.Market] = domain.Market{
-								Give: givetake[0], Take: givetake[1],
-								Exchange: &domain.Exchange{Name: domain.Kucoin}}
-						}
-					}
-				}
+				//Same as OKX
 			default:
 				zap.L().Fatal("unknown exchange")
 			}
 		}
 	}
-
-	//Repo
-	influxRepo := influxdb.New(influxWrite, influxRead)
-	okxRepo := okx.New(testMarket.Exchange, connectionManager)
 
 	//service
 	emaStrategy := strategies.NewEmaStrategy(testMarket, okxRepo, influxRepo)

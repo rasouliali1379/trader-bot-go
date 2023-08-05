@@ -18,12 +18,11 @@ const (
 )
 
 type repository struct {
-	exchange *domain.Exchange
-	conn     *exchange.ConnectionManager
+	conn *exchange.ConnectionManager
 }
 
-func New(exchange *domain.Exchange, conn *exchange.ConnectionManager) port.ExchangeRepository {
-	return &repository{exchange: exchange, conn: conn}
+func New(conn *exchange.ConnectionManager) port.ExchangeRepository {
+	return &repository{conn: conn}
 }
 
 func (r *repository) GetBalance(c context.Context) error {
@@ -108,9 +107,7 @@ func (r *repository) Read(_ context.Context) (any, error) {
 	return nil, domain.ErrUnknownType
 }
 
-func (r *repository) HasMarket(c context.Context, name string) error {
-	get, err := r.conn.Http().Get(c, "", nil)
-	if err != nil {
-		return err
-	}
+func (r *repository) HasMarket(c context.Context, m *domain.Market) error {
+	//TODO implement me
+	panic("implement me")
 }

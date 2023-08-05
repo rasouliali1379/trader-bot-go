@@ -11,7 +11,7 @@ type ExchangeRepository interface {
 	Subscribe(c context.Context, channel string, instrumentID string) error
 	Unsubscribe(c context.Context, channel string, instrumentID string) error
 	Read(c context.Context) (any, error)
-	HasMarket(c context.Context, name string) error
+	HasMarket(c context.Context, m *domain.Market) error
 }
 
 type InfluxRepository interface {
