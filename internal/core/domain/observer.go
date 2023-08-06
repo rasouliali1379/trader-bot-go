@@ -5,16 +5,16 @@ import (
 	"go.uber.org/zap"
 )
 
-type observer func(context.Context) error
+type observer func(context.Context, *Market) error
 
 type Observer struct {
 	list []observer
 }
 
-func (o *Observer) NotifyAll(ctx context.Context) {
+func (o *Observer) NotifyAll(ctx context.Context, m *Market) {
 	for i := range o.list {
 		go func(index int) {
-			if err := o.list[index](ctx); err != nil {
+			if err := o.list[index](ctx, m); err != nil {
 				zap.L().Error("error while informing an observer", zap.Error(err))
 			}
 		}(i)

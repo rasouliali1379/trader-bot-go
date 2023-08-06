@@ -6,7 +6,7 @@ import (
 )
 
 type StrategyService interface {
-	Execute(c context.Context) error
+	Execute(c context.Context, m *domain.Market) error
 }
 
 type MarketService interface {

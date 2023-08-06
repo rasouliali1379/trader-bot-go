@@ -7,8 +7,9 @@ import (
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/exchanges/okx"
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/influxdb"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/port"
-	markets_srv "hamgit.ir/novin-backend/trader-bot/internal/core/service/markets"
+	market_srv "hamgit.ir/novin-backend/trader-bot/internal/core/service/market"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/service/strategies"
+	"hamgit.ir/novin-backend/trader-bot/internal/core/service/strategies/ema"
 
 	"runtime"
 	"strings"
@@ -32,28 +33,32 @@ func main() {
 	influxRepo := influxdb.New(influxWrite, influxRead)
 	okxRepo := okx.New(connectionManager)
 
-	markets := make(map[string]port.MarketJob)
+	markets := make(map[string]port.StrategyService)
 	for _, s := range config.C().Strategies {
 		for _, m := range s.Markets {
 			switch m.Exchange {
 			case domain.OKX:
 				if value, ok := markets[m.Market]; !ok {
+					var mrkt *domain.Market
 					givetake := strings.Split(m.Market, "-")
 					if len(givetake) == 2 {
-						value = &domain.Market{
+						mrkt = &domain.Market{
 							Give: givetake[0], Take: givetake[1],
-							Exchange: &domain.Exchange{Name: domain.OKX}}
+							Exchange: &domain.Exchange{Name: domain.OKX},
+						}
 					}
 
-					if value == nil {
+					if mrkt == nil {
 						markets[m.Market] = nil
 						continue
 					}
 
-					if err := okxRepo.HasMarket(context.Background(), value); err != nil {
+					if err := okxRepo.HasMarket(context.Background(), mrkt); err != nil {
 						markets[m.Market] = nil
 						continue
 					}
+
+					strategy := strategies.New(domain.Strategy(s.Strategy), okxRepo, influxRepo)
 
 					markets[m.Market] = value
 				}
@@ -69,10 +74,10 @@ func main() {
 	}
 
 	//service
-	emaStrategy := strategies.NewEmaStrategy(testMarket, okxRepo, influxRepo)
+	emaStrategy := ema.New(okxRepo, influxRepo)
 	var okxMarketObservers domain.Observer
 	okxMarketObservers.Register(emaStrategy.Execute)
-	okxMarketService := markets_srv.NewOkxMarketService(okxRepo, influxRepo, okxMarketObservers)
+	okxMarketService := market_srv.New(okxRepo, influxRepo, okxMarketObservers)
 
 	//jobs
 	marketJob := market.New(okxMarketService, okxRepo)

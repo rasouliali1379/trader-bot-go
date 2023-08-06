@@ -1,4 +1,4 @@
-package strategies
+package ema
 
 import (
 	"context"
@@ -9,25 +9,23 @@ import (
 	"time"
 )
 
-type ema struct {
-	market       *domain.Market
+type service struct {
 	exchangeRepo port.ExchangeRepository
 	influxRepo   port.InfluxRepository
 }
 
-func NewEmaStrategy(
-	market *domain.Market,
+func New(
 	exchangeRepo port.ExchangeRepository,
 	influxRepo port.InfluxRepository,
 ) port.StrategyService {
-	return &ema{market: market, exchangeRepo: exchangeRepo, influxRepo: influxRepo}
+	return &service{exchangeRepo: exchangeRepo, influxRepo: influxRepo}
 }
 
-func (e ema) Execute(c context.Context) error {
+func (e service) Execute(c context.Context, m *domain.Market) error {
 	zap.L().Info("Executing EMA strategy")
 	defer zap.L().Info("EMA strategy executed successfully")
 
-	market, err := e.influxRepo.GetPrices(c, e.market, time.Minute*60)
+	market, err := e.influxRepo.GetPrices(c, m, time.Minute*60)
 	if err != nil {
 		return err
 	}

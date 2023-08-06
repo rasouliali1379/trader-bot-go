@@ -1,5 +1,0 @@
-package markets
-
-func NewBinanceMarketService() {
-
-}

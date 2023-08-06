@@ -1,6 +1,8 @@
 ### Initialization Flow
 #### 1- Reading config file:
-`confgi.yaml` should include infrastructure, exchanges and strategies configurations.
+`config.yaml` should include infrastructure and exchanges configurations.
+<br/>
+`strategies.yaml` must include strategy configurations.
 #### 2- Creating domain models:
 Relation between domain models described in image below:
 
