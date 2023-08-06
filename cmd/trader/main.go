@@ -3,25 +3,23 @@ package main
 import (
 	"context"
 	"go.uber.org/zap"
-	influx "hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/influxdb"
-	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/exchanges/okx"
-	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/influxdb"
-	"hamgit.ir/novin-backend/trader-bot/internal/core/port"
-	market_srv "hamgit.ir/novin-backend/trader-bot/internal/core/service/market"
-	"hamgit.ir/novin-backend/trader-bot/internal/core/service/strategies"
-	"hamgit.ir/novin-backend/trader-bot/internal/core/service/strategies/ema"
-
-	"runtime"
-	"strings"
-
 	"hamgit.ir/novin-backend/trader-bot/config"
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/exchange"
+	influx "hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/influxdb"
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/log"
-	"hamgit.ir/novin-backend/trader-bot/internal/adapter/job/market"
+	marketjob "hamgit.ir/novin-backend/trader-bot/internal/adapter/job/market"
+	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/exchanges/okx"
+	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/influxdb"
 	"hamgit.ir/novin-backend/trader-bot/internal/core/domain"
+	"hamgit.ir/novin-backend/trader-bot/internal/core/port"
+	marketsrv "hamgit.ir/novin-backend/trader-bot/internal/core/service/market"
+	"hamgit.ir/novin-backend/trader-bot/internal/core/service/strategies"
+	"runtime"
 )
 
 func main() {
+	c, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	//infra
 	config.Init("/dev/config/trader/")
 	log.Init()
@@ -29,61 +27,45 @@ func main() {
 	influxWrite, influxRead := influx.Init()
 	connectionManager := exchange.Init()
 
-	//Repo
 	influxRepo := influxdb.New(influxWrite, influxRead)
 	okxRepo := okx.New(connectionManager)
 
-	markets := make(map[string]port.StrategyService)
+	var marketList domain.MarketList
+	marketList.FromConfig(config.C().Strategies)
+
+	strategyMap := make(map[string]port.StrategyService)
 	for _, s := range config.C().Strategies {
-		for _, m := range s.Markets {
-			switch m.Exchange {
-			case domain.OKX:
-				if value, ok := markets[m.Market]; !ok {
-					var mrkt *domain.Market
-					givetake := strings.Split(m.Market, "-")
-					if len(givetake) == 2 {
-						mrkt = &domain.Market{
-							Give: givetake[0], Take: givetake[1],
-							Exchange: &domain.Exchange{Name: domain.OKX},
-						}
-					}
-
-					if mrkt == nil {
-						markets[m.Market] = nil
-						continue
-					}
-
-					if err := okxRepo.HasMarket(context.Background(), mrkt); err != nil {
-						markets[m.Market] = nil
-						continue
-					}
-
-					strategy := strategies.New(domain.Strategy(s.Strategy), okxRepo, influxRepo)
-
-					markets[m.Market] = value
-				}
-
-			case domain.Binance:
-				//Same as OKX
-			case domain.Kucoin:
-				//Same as OKX
-			default:
-				zap.L().Fatal("unknown exchange")
-			}
+		if _, ok := strategyMap[s.Strategy]; !ok {
+			strategyMap[s.Strategy] = strategies.New(domain.Strategy(s.Strategy), influxRepo)
 		}
 	}
 
-	//service
-	emaStrategy := ema.New(okxRepo, influxRepo)
-	var okxMarketObservers domain.Observer
-	okxMarketObservers.Register(emaStrategy.Execute)
-	okxMarketService := market_srv.New(okxRepo, influxRepo, okxMarketObservers)
+	for _, m := range marketList.List {
+		var job port.MarketJob
+		switch m.Exchange.Name {
+		case domain.OKX:
+			if err := okxRepo.HasMarket(c, &m); err != nil {
+				zap.L().Error("market wasn't found", zap.Any("market", m))
+			}
 
-	//jobs
-	marketJob := market.New(okxMarketService, okxRepo)
+			var observers domain.Observer
 
-	if err := marketJob.Run(context.Background(), testMarket); err != nil {
-		zap.L().Fatal("error while running job", zap.Error(err))
+			for _, s := range m.Strategies {
+				if strategy, ok := strategyMap[string(s)]; ok {
+					observers.Register(strategy.Execute)
+				}
+			}
+
+			job = marketjob.New(marketsrv.New(okxRepo, influxRepo, observers), okxRepo)
+		case domain.Binance:
+			//Same as OKX
+		case domain.Kucoin:
+			//Same as OKX
+		default:
+			zap.L().Fatal("unknown exchange")
+		}
+
+		zap.L().Fatal("error while running job", zap.Error(job.Run(context.Background(), &m)))
 	}
 
 	runtime.Goexit()

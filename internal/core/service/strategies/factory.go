@@ -7,10 +7,10 @@ import (
 	"hamgit.ir/novin-backend/trader-bot/internal/core/service/strategies/ema"
 )
 
-func New(s domain.Strategy, r port.ExchangeRepository, i port.InfluxRepository) port.StrategyService {
+func New(s domain.Strategy, i port.InfluxRepository) port.StrategyService {
 	switch s {
 	case domain.Ema:
-		return ema.New(r, i)
+		return ema.New(i)
 	default:
 		zap.L().Fatal("unknown strategy", zap.String("strategy", string(s)))
 	}

@@ -14,12 +14,12 @@ type service struct {
 }
 
 func New(
-	okxRepo port.ExchangeRepository,
+	exchange port.ExchangeRepository,
 	influxRepo port.InfluxRepository,
 	observers domain.Observer,
 ) port.MarketService {
 	return &service{
-		exchange:   okxRepo,
+		exchange:   exchange,
 		influxRepo: influxRepo,
 		observers:  observers,
 	}
@@ -31,5 +31,5 @@ func (o service) SubscribeToMarket(c context.Context, m *domain.Market) error {
 
 func (o service) TrackMarket(c context.Context, m *domain.Market) {
 	o.influxRepo.AddPrice(c, m)
-	o.observers.NotifyAll(c, m)
+	o.observers.NotifyAll(c, m, o.exchange)
 }

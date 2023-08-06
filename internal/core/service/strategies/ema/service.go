@@ -10,18 +10,16 @@ import (
 )
 
 type service struct {
-	exchangeRepo port.ExchangeRepository
-	influxRepo   port.InfluxRepository
+	influxRepo port.InfluxRepository
 }
 
 func New(
-	exchangeRepo port.ExchangeRepository,
 	influxRepo port.InfluxRepository,
 ) port.StrategyService {
-	return &service{exchangeRepo: exchangeRepo, influxRepo: influxRepo}
+	return &service{influxRepo: influxRepo}
 }
 
-func (e service) Execute(c context.Context, m *domain.Market) error {
+func (e service) Execute(c context.Context, m *domain.Market, r port.ExchangeRepository) error {
 	zap.L().Info("Executing EMA strategy")
 	defer zap.L().Info("EMA strategy executed successfully")
 
