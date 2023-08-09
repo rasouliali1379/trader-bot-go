@@ -1,5 +1,7 @@
 strategies:
   - strategy: ema
     markets:
-      - market: BTC-USDT
+      - market: BTC-USD
+        exchange: okx
+      - market: ETH-USD
         exchange: okx

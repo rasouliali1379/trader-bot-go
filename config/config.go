@@ -8,27 +8,20 @@ import (
 	"net/url"
 	"os"
 	"reflect"
-	"sync"
 	"time"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-)
-
-var (
-	confs = Config{}
-	lock  = sync.Mutex{}
 )
 
 const (
 	EnvProduction = "prod"
 	EnvDev        = "dev"
 	EnvTest       = "test"
-)
 
-const (
 	StrategyEma = "ema"
 )
+
+var conf = Config{}
 
 type Config struct {
 	App App `yaml:"app" required:"true"`
@@ -92,35 +85,8 @@ type InfluxDB struct {
 	Bucket string `yaml:"bucket" required:"true"`
 }
 
-func Validate(c any) error {
-	errMsg := ""
-	numFields := reflect.TypeOf(c).NumField()
-	for i := 0; i < numFields; i++ {
-		fieldType := reflect.TypeOf(c).Field(i)
-		tagval, ok := fieldType.Tag.Lookup("required")
-		isRequired := ok && tagval == "true"
-		if !isRequired {
-			continue
-		}
-		fieldVal := reflect.ValueOf(c).Field(i)
-		if fieldVal.Kind() == reflect.Struct {
-			if err := Validate(fieldVal.Interface()); err != nil {
-				errMsg += fmt.Sprintf("%s > [%v], ", fieldType.Name, err)
-			}
-		} else {
-			if fieldVal.IsZero() {
-				errMsg += fmt.Sprintf("%s, ", fieldType.Name)
-			}
-		}
-	}
-	if errMsg == "" {
-		return nil
-	}
-	return errors.New(errMsg)
-}
-
 func C() *Config {
-	return &confs
+	return &conf
 }
 
 func Init(path string) {
@@ -138,32 +104,55 @@ func Init(path string) {
 
 	viper.AddConfigPath(configPath)
 	viper.AddConfigPath(".")
-	viper.ReadInConfig()
-	loadConfigs()
-	viper.OnConfigChange(func(in fsnotify.Event) {
-		lock.Lock()
-		defer lock.Unlock()
-		lastUpdate := viper.GetTime("fsnotify")
-		if time.Since(lastUpdate) < time.Second {
-			return
-		}
-		viper.Set("fsnotify", time.Now())
-		log.Println("config file changed. restarting...")
-	})
-	viper.WatchConfig()
+	if err = viper.ReadInConfig(); err != nil {
+		panic(err)
+	}
+
+	viper.SetConfigName("strategies")
+	if err = viper.MergeInConfig(); err != nil {
+		panic(err)
+	}
+
+	loadConfig()
 }
 
-func loadConfigs() {
-	must(viper.Unmarshal(&confs),
+func loadConfig() {
+	must(viper.Unmarshal(&conf),
 		"could not unmarshal config file")
-	must(Validate(confs),
+	must(runValidation(conf),
 		"some required configurations are missing")
-	log.Printf("configs loaded from file successfully \n")
+	log.Println("configs loaded from file successfully")
 }
 
 func must(err error, logMsg string) {
 	if err != nil {
-		log.Println(logMsg)
-		panic(err)
+		panic(fmt.Errorf("%s%w", logMsg, err))
 	}
+}
+
+func runValidation(c any) error {
+	errMsg := ""
+	numFields := reflect.TypeOf(c).NumField()
+	for i := 0; i < numFields; i++ {
+		fieldType := reflect.TypeOf(c).Field(i)
+		value, ok := fieldType.Tag.Lookup("required")
+		isRequired := ok && value == "true"
+		if !isRequired {
+			continue
+		}
+		fieldVal := reflect.ValueOf(c).Field(i)
+		if fieldVal.Kind() == reflect.Struct {
+			if err := runValidation(fieldVal.Interface()); err != nil {
+				errMsg += fmt.Sprintf("%s > [%v], ", fieldType.Name, err)
+			}
+		} else {
+			if fieldVal.IsZero() {
+				errMsg += fmt.Sprintf("%s, ", fieldType.Name)
+			}
+		}
+	}
+	if errMsg == "" {
+		return nil
+	}
+	return errors.New(errMsg)
 }

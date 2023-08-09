@@ -108,6 +108,5 @@ func (r *repository) Read(_ context.Context) (any, error) {
 }
 
 func (r *repository) HasMarket(c context.Context, m *domain.Market) error {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }

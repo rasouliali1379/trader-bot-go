@@ -40,9 +40,3 @@ mysql:
 
 jobDuration:
   market: "5s"
-
-strategies:
-  - strategy: ema
-    markets:
-      - market: BTC-USDT
-        exchange: okx

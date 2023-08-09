@@ -3,19 +3,18 @@ package domain
 import (
 	"context"
 	"go.uber.org/zap"
-	"hamgit.ir/novin-backend/trader-bot/internal/core/port"
 )
 
-type observer func(context.Context, *Market, port.ExchangeRepository) error
+type observer func(context.Context, *Market) error
 
 type Observer struct {
 	list []observer
 }
 
-func (o *Observer) NotifyAll(c context.Context, m *Market, r port.ExchangeRepository) {
+func (o *Observer) NotifyAll(c context.Context, m *Market) {
 	for i := range o.list {
 		go func(index int) {
-			if err := o.list[index](c, m, r); err != nil {
+			if err := o.list[index](c, m); err != nil {
 				zap.L().Error("error while informing an observer", zap.Error(err))
 			}
 		}(i)

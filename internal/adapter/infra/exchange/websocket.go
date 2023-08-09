@@ -37,6 +37,7 @@ func newWebSocketWrapper(url string) WebSocketWrapper {
 func (w *webSocketWrapper) Read() ([]byte, error) {
 	_, msg, err := w.conn.ReadMessage()
 	if err != nil {
+		zap.L().Error("", zap.Error(err))
 		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 			return nil, ErrUnexpectedConnectionClose
 		}

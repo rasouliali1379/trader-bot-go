@@ -30,33 +30,40 @@ func main() {
 	influxRepo := influxdb.New(influxWrite, influxRead)
 	okxRepo := okx.New(connectionManager)
 
-	var marketList domain.MarketList
-	marketList.FromConfig(config.C().Strategies)
+	var exchangeList domain.ExchangeList
+	exchangeList.FromConfig(config.C().Strategies)
 
 	strategyMap := make(map[string]port.StrategyService)
-	for _, s := range config.C().Strategies {
-		if _, ok := strategyMap[s.Strategy]; !ok {
-			strategyMap[s.Strategy] = strategies.New(domain.Strategy(s.Strategy), influxRepo)
-		}
-	}
-
+	jobMap := make(map[string]port.MarketJob)
 	for _, m := range marketList.List {
-		var job port.MarketJob
 		switch m.Exchange.Name {
 		case domain.OKX:
 			if err := okxRepo.HasMarket(c, &m); err != nil {
 				zap.L().Error("market wasn't found", zap.Any("market", m))
+				continue
 			}
 
 			var observers domain.Observer
 
 			for _, s := range m.Strategies {
-				if strategy, ok := strategyMap[string(s)]; ok {
-					observers.Register(strategy.Execute)
+				var strategy port.StrategyService
+				var ok bool
+
+				if strategy, ok = strategyMap[string(s)]; !ok {
+					strategy = strategies.New(s, influxRepo, okxRepo)
+					strategyMap[string(s)+m.Exchange.Name] = strategy
 				}
+
+				observers.Register(strategy.Execute)
 			}
 
-			job = marketjob.New(marketsrv.New(okxRepo, influxRepo, observers), okxRepo)
+			var job port.MarketJob
+			var ok bool
+
+			if job, ok = jobMap[domain.OKX]; !ok {
+				job = marketjob.New(marketsrv.New(&m, okxRepo, influxRepo, observers), okxRepo)
+				jobMap[domain.OKX] = job
+			}
 		case domain.Binance:
 			//Same as OKX
 		case domain.Kucoin:
@@ -64,8 +71,12 @@ func main() {
 		default:
 			zap.L().Fatal("unknown exchange")
 		}
+	}
 
-		zap.L().Fatal("error while running job", zap.Error(job.Run(context.Background(), &m)))
+	for _, job := range jobMap {
+		if err := job.Run(context.Background()); err != nil {
+			zap.L().Fatal("error while running job", zap.Error(err))
+		}
 	}
 
 	runtime.Goexit()
