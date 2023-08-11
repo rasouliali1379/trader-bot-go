@@ -65,16 +65,16 @@ type OKX struct {
 }
 
 type JobDuration struct {
-	Market time.Duration `yaml:"market" required:"true"`
+	Market time.Duration `yaml:"exchange" required:"true"`
 }
 
 type Strategy struct {
 	Strategy string   `yaml:"strategy" required:"true"`
-	Markets  []Market `yaml:"market" required:"true"`
+	Markets  []Market `yaml:"exchange" required:"true"`
 }
 
 type Market struct {
-	Market   string `yaml:"market" required:"true"`
+	Market   string `yaml:"exchange" required:"true"`
 	Exchange string `yaml:"exchange" required:"true"`
 }
 

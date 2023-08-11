@@ -6,10 +6,10 @@ import (
 )
 
 type StrategyService interface {
-	Execute(c context.Context, m *domain.Market) error
+	Execute(c context.Context, exchange domain.Exchange, m *domain.Market) error
 }
 
-type MarketService interface {
-	SubscribeToMarket(c context.Context, m *domain.Market) error
-	TrackMarket(c context.Context, p *domain.Price)
+type ExchangeService interface {
+	TrackMarket(c context.Context, m *domain.Market) error
+	WatchMarkets(c context.Context)
 }

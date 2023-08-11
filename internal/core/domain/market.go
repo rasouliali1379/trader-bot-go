@@ -1,18 +1,22 @@
 package domain
 
 import (
+	"errors"
 	"fmt"
 )
 
-type MarketList struct {
-	List []Market
-}
+var (
+	ErrInvalidInstrumentID = errors.New("invalid instrument id")
+)
+
+type MarketList []Market
 
 type Market struct {
 	Give       string
 	Take       string
 	Price      *Price
 	Strategies []Strategy
+	Strategy   Strategies
 }
 
 func (m *Market) String() string {

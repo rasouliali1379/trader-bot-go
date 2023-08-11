@@ -11,6 +11,7 @@ import (
 	"hamgit.ir/novin-backend/trader-bot/internal/core/port"
 	"log"
 	"net/url"
+	"strings"
 )
 
 const (
@@ -23,6 +24,10 @@ type repository struct {
 
 func New(conn *exchange.ConnectionManager) port.ExchangeRepository {
 	return &repository{conn: conn}
+}
+
+func (r *repository) Name() domain.Exchange {
+	return domain.OKX
 }
 
 func (r *repository) GetBalance(c context.Context) error {
@@ -100,8 +105,19 @@ func (r *repository) Read(_ context.Context) (any, error) {
 			return nil, err
 		}
 
-		var m domain.Price
-		return m.FromIndexCandlesDto(indexCandles), nil
+		var p domain.Price
+		p.FromIndexCandlesDto(indexCandles)
+
+		instID := strings.Split(dynamic.Arg.InstID, "-")
+
+		if len(instID) < 2 {
+			return nil, domain.ErrInvalidInstrumentID
+		}
+
+		return &domain.Market{
+			Give:  instID[0],
+			Take:  instID[1],
+			Price: p.FromIndexCandlesDto(indexCandles)}, nil
 	}
 
 	return nil, domain.ErrUnknownType

@@ -19,7 +19,7 @@ func Test_repository_GetBalance(t *testing.T) {
 	testMarket := &domain.Market{
 		Give:     "BTC",
 		Take:     "USDT",
-		Exchange: &domain.Exchange{Name: "okx"},
+		Exchange: &domain.ExchangeItem{Name: "okx"},
 	}
 
 	okxRepo := New(testMarket.Exchange, connectionManager)

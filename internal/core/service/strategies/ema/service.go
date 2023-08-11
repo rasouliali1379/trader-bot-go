@@ -21,11 +21,11 @@ func New(
 	return &service{influxRepo: influxRepo, exchangeRepo: exchangeRepo}
 }
 
-func (e service) Execute(c context.Context, m *domain.Market) error {
+func (e service) Execute(c context.Context, exchange domain.Exchange, m *domain.Market) error {
 	zap.L().Info("Executing EMA strategy")
 	defer zap.L().Info("EMA strategy executed successfully")
 
-	market, err := e.influxRepo.GetPrices(c, m, time.Minute*60)
+	market, err := e.influxRepo.GetPrices(c, exchange, m, time.Minute*60)
 	if err != nil {
 		return err
 	}

@@ -11,7 +11,7 @@ import (
 )
 
 type Price struct {
-	Exchange *Exchange
+	Exchange *ExchangeItem
 	Candles  []Candle
 	Prices   []PriceItem
 }

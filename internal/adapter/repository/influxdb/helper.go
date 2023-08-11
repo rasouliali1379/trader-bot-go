@@ -7,16 +7,16 @@ import (
 	"time"
 )
 
-func createOHLCFluxQuery(bucket string, m *domain.Market, duration time.Duration) string {
+func createOHLCFluxQuery(bucket string, exchange domain.Exchange, m *domain.Market, duration time.Duration) string {
 	return fmt.Sprintf(`from(bucket: "%s")
   |> range(start: -%s)
   |> filter(fn: (r) => r["_measurement"] == "%s")
   |> filter(fn: (r) => r["_field"] == "close" or r["_field"] == "high" or r["_field"] == "low" or r["_field"] == "open")
-  |> filter(fn: (r) => r["market"] == "%s%s")
+  |> filter(fn: (r) => r["exchange"] == "%s%s")
   |> yield(name: "mean")`,
 		bucket,
 		shortDuration(duration),
-		m.Exchange.Name,
+		exchange,
 		m.Give,
 		m.Take,
 	)

@@ -19,11 +19,11 @@ func New(write influxapi.WriteAPI, read influxapi.QueryAPI) port.InfluxRepositor
 	return &repository{write: write, read: read}
 }
 
-func (r *repository) AddPrice(_ context.Context, m *domain.Market) {
+func (r *repository) AddPrice(_ context.Context, exchange domain.Exchange, m *domain.Market) {
 	for i := range m.Price.Candles {
 		measure := m.Give + m.Take
-		p := influxdb2.NewPointWithMeasurement(m.Exchange.Name).
-			AddTag("market", measure).
+		p := influxdb2.NewPointWithMeasurement(string(exchange)).
+			AddTag("exchange", measure).
 			AddField("open", m.Price.Candles[i].Open).
 			AddField("close", m.Price.Candles[i].Close).
 			AddField("high", m.Price.Candles[i].High).
@@ -34,8 +34,8 @@ func (r *repository) AddPrice(_ context.Context, m *domain.Market) {
 	r.write.Flush()
 }
 
-func (r *repository) GetPrices(c context.Context, m *domain.Market, period time.Duration) (*domain.Market, error) {
-	query := createOHLCFluxQuery(config.C().InfluxDB.Bucket, m, period)
+func (r *repository) GetPrices(c context.Context, exchange domain.Exchange, m *domain.Market, period time.Duration) (*domain.Market, error) {
+	query := createOHLCFluxQuery(config.C().InfluxDB.Bucket, exchange, m, period)
 	result, err := r.read.QueryRaw(c, query, influxdb2.DefaultDialect())
 	if err != nil {
 		return nil, err

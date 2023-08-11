@@ -7,6 +7,7 @@ import (
 )
 
 type ExchangeRepository interface {
+	Name() domain.Exchange
 	GetBalance(c context.Context) error
 	Subscribe(c context.Context, channel string, instrumentID string) error
 	Unsubscribe(c context.Context, channel string, instrumentID string) error
@@ -15,6 +16,6 @@ type ExchangeRepository interface {
 }
 
 type InfluxRepository interface {
-	AddPrice(ctx context.Context, m *domain.Market)
-	GetPrices(ctx context.Context, m *domain.Market, period time.Duration) (*domain.Market, error)
+	AddPrice(ctx context.Context, exchange domain.Exchange, m *domain.Market)
+	GetPrices(ctx context.Context, exchange domain.Exchange, m *domain.Market, period time.Duration) (*domain.Market, error)
 }
