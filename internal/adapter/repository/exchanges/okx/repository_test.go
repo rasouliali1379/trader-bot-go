@@ -5,7 +5,6 @@ import (
 	"hamgit.ir/novin-backend/trader-bot/config"
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/exchange"
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/infra/log"
-	"hamgit.ir/novin-backend/trader-bot/internal/core/domain"
 	"testing"
 )
 
@@ -16,13 +15,7 @@ func Test_repository_GetBalance(t *testing.T) {
 
 	connectionManager := exchange.Init()
 
-	testMarket := &domain.Market{
-		Give:     "BTC",
-		Take:     "USDT",
-		Exchange: &domain.ExchangeItem{Name: "okx"},
-	}
-
-	okxRepo := New(testMarket.Exchange, connectionManager)
+	okxRepo := New(connectionManager)
 
 	if err := okxRepo.GetBalance(context.Background()); err != nil {
 		t.Error(err)
