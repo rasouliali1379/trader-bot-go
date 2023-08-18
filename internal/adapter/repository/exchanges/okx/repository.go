@@ -1,6 +1,7 @@
 package okx
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	jsoniter "github.com/json-iterator/go"
@@ -16,6 +17,7 @@ import (
 
 const (
 	balancePath = "/api/v5/account/balance"
+	orderPath   = "/api/v5/trade/order"
 )
 
 type repository struct {
@@ -38,18 +40,50 @@ func (r *repository) GetBalance(c context.Context) error {
 	}
 
 	headers := createOKXAuthHeader(
-		"GET", balancePath, config.C().OKX.ApiKey, config.C().OKX.SecretKey, config.C().OKX.Passphrase)
+		"GET", balancePath, config.C().OKX.ApiKey, config.C().OKX.SecretKey, config.C().OKX.Passphrase, nil)
 
-	res, err := r.conn.Http().Get(c, path, headers)
+	res, err := r.conn.Http().R().
+		SetContext(c).
+		SetHeaders(headers).
+		Get(path)
 	if err != nil {
 		return err
 	}
 
 	var balance dto.Balance
-	if err = jsoniter.Unmarshal(res, &balance); err != nil {
+	if err = jsoniter.Unmarshal(res.Body(), &balance); err != nil {
 		return err
 	}
 	log.Println(balance)
+	return nil
+}
+
+func (r *repository) PlaceOrder(c context.Context, m *domain.Order) error {
+
+	path, err := url.JoinPath(config.C().OKX.HttpUrl, orderPath)
+	if err != nil {
+		return err
+	}
+
+	request, err := createPlaceOrderRequest(m)
+	if err != nil {
+		return err
+	}
+
+	headers := createOKXAuthHeader(
+		"POST", orderPath, config.C().OKX.ApiKey, config.C().OKX.SecretKey, config.C().OKX.Passphrase, request)
+
+	res, err := r.conn.Http().R().
+		SetContext(c).
+		SetHeaders(headers).
+		SetBody(bytes.NewReader(request)).
+		Post(path)
+	if err != nil {
+		return err
+	}
+
+	log.Println(string(res.Body()))
+
 	return nil
 }
 

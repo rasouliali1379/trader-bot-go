@@ -9,6 +9,7 @@ import (
 type ExchangeRepository interface {
 	Name() domain.Exchange
 	GetBalance(c context.Context) error
+	PlaceOrder(c context.Context, m *domain.Order) error
 	Subscribe(c context.Context, channel string, instrumentID string) error
 	Unsubscribe(c context.Context, channel string, instrumentID string) error
 	Read(c context.Context) (any, error)

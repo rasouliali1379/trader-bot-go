@@ -1,6 +1,7 @@
 package exchange
 
 import (
+	"github.com/go-resty/resty/v2"
 	"go.uber.org/zap"
 	"hamgit.ir/novin-backend/trader-bot/config"
 )
@@ -13,7 +14,7 @@ const (
 
 type ConnectionManager struct {
 	w map[int]WebSocketWrapper
-	h HttpWrapper
+	h *resty.Client
 }
 
 func Init() *ConnectionManager {
@@ -21,13 +22,10 @@ func Init() *ConnectionManager {
 
 	conns[OKX] = newWebSocketWrapper(config.C().OKX.WebSocketUrl)
 
-	return &ConnectionManager{
-		w: conns,
-		h: newHttpWrapper(),
-	}
+	return &ConnectionManager{w: conns, h: resty.New()}
 }
 
-func (c *ConnectionManager) Http() HttpWrapper {
+func (c *ConnectionManager) Http() *resty.Client {
 	return c.h
 }
 
