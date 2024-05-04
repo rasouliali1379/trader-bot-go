@@ -1,19 +1,21 @@
 package domain
 
 import (
-	"github.com/markcheno/go-talib"
 	"log"
+	"strconv"
 	"strings"
+	"time"
 
 	"hamgit.ir/novin-backend/trader-bot/internal/adapter/repository/exchanges/okx/dto"
-	"strconv"
-	"time"
+
+	"github.com/go-gota/gota/dataframe"
+	"github.com/markcheno/go-talib"
 )
 
 type Price struct {
 	Exchange *ExchangeItem
 	Candles  []Candle
-	Prices   []PriceItem
+	Prices   dataframe.DataFrame
 }
 
 type Candle struct {
@@ -68,13 +70,7 @@ func (p *Price) Ema(timePeriod int) []float64 {
 }
 
 func (p *Price) close() []float64 {
-	closePrices := make([]float64, len(p.Candles))
-
-	for i := range p.Candles {
-		closePrices[i] = p.Candles[i].Close
-	}
-
-	return closePrices
+	return p.Prices.Col("close").Float()
 }
 
 func (i Candle) FromIndexTickersDto(price dto.IndexTickers) Candle {
@@ -92,7 +88,16 @@ func (i Candle) FromIndexTickersDto(price dto.IndexTickers) Candle {
 	}
 }
 
-func (p *Price) ParseFromInfluxDto(result string) {
+func (p *Price) ParseFromInfluxCsv(result string) {
+	rows := strings.Split(result, "\n")
+
+	rawData := rows[3:]
+
+	df := dataframe.ReadCSV(strings.NewReader(strings.Join(rawData, "\n")))
+	p.Prices = df.Drop([]int{0, 1, 2, 3, 4, 6, 7})
+}
+
+func parseInfluxCsvToCandleModel(result string) []Candle {
 	rows := strings.Split(result, "\n")
 
 	rawData := rows[4:]
@@ -134,5 +139,5 @@ func (p *Price) ParseFromInfluxDto(result string) {
 		candles = append(candles, value)
 	}
 
-	p.Candles = candles
+	return candles
 }

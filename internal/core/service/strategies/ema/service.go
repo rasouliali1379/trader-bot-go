@@ -25,12 +25,14 @@ func (e service) Execute(c context.Context, exchange domain.Exchange, m *domain.
 	zap.L().Info("Executing EMA strategy")
 	defer zap.L().Info("EMA strategy executed successfully")
 
-	market, err := e.influxRepo.GetPrices(c, exchange, m, time.Minute*60)
+	market, err := e.influxRepo.GetPrices(c, exchange, m, time.Minute*120)
 	if err != nil {
 		return err
 	}
 
-	if len(market.Price.Candles) > 21 {
+	log.Println(market.Price.Prices)
+
+	if market.Price.Prices.Nrow() > 21 {
 		log.Println(market.Price.Ema(21))
 		log.Println(market.Price.Ema(8))
 	}

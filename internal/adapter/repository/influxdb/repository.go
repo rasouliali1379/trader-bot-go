@@ -41,6 +41,6 @@ func (r *repository) GetPrices(c context.Context, exchange domain.Exchange, m *d
 		return nil, err
 	}
 
-	m.Price.ParseFromInfluxDto(result)
+	m.Price.ParseFromInfluxCsv(result)
 	return m, nil
 }
